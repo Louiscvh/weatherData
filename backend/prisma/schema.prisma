@@ -1,0 +1,24 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:../database.db"
+}
+
+generator db {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+// Modèle pour les données météorologiques
+model WeatherData {
+  id          Int      @id @default(autoincrement())
+  city_name   String
+  latitude    Float
+  longitude   Float
+  temperature Float
+  feels_like  Float
+  humidity    Int
+  pressure    Int
+  description String
+  timestamp   DateTime @default(now())
+}

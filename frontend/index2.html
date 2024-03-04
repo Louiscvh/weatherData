@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather App</title>
+</head>
+<body>
+<div class="container">
+    <ul id="weather-list"></ul>
+</div>
+
+<script type="module">
+    import { io } from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
+
+    const socket = io("http://127.0.0.1:8080/data");
+
+    socket.on("connect", () => {
+        console.log(socket.id);
+    });
+
+    window.onload = () => {
+        const fetchInitialData = async () => {
+            const request = await fetch("http://127.0.0.1:8080/weather");
+            const data = await request.json();
+            console.log(data);
+        };
+        fetchInitialData();
+    };
+
+    socket.on("latest_data", (data) => {
+        console.log(data);
+        const weatherList = document.getElementById("weather-list");
+        data.forEach((item) => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <p>${item.city_name}</p>
+                <p>${item.temperature}°C</p>
+                <p>${item.humidity}%</p>
+                <p>${item.pressure}</p>
+            `;
+            weatherList.appendChild(li);
+        });
+    });
+</script>
+</body>
+</html>
