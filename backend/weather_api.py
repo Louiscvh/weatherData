@@ -1,8 +1,13 @@
 from flask import request, jsonify
-from weather_api_service import get_all_weather_service, get_weather_by_id_service, create_weather_service, delete_weather_service, get_weather_by_filter_service
+from weather_api_service import (get_all_weather_service,
+                                 get_weather_by_id_service,
+                                 create_weather_service,
+                                 delete_weather_service,
+                                 get_weather_by_filter_service,
+                                 update_weather_service)
 from flask_jwt_extended import jwt_required
 
-def init_routes(app):
+def init_routes(app, socketio):
     @app.route('/weather', methods=['GET'])
     @jwt_required()
     async def get_all_weather():
@@ -27,12 +32,23 @@ def init_routes(app):
     @jwt_required()
     async def create_weather():
         weather_params = request.json
+        print(weather_params)
         created_weather = await create_weather_service(weather_params)
+        socketio.emit('send_newdata', created_weather, namespace='/data')
         return jsonify(created_weather)
+
+    @app.route('/weather', methods=['PATCH'])
+    @jwt_required()
+    async def update_weather():
+        weather_params = request.json
+        updated_weather = await update_weather_service(weather_params)
+        socketio.emit('edit_data', updated_weather, namespace='/data')
+        return jsonify(updated_weather)
 
     @app.route('/weather/<int:id>', methods=['DELETE'])
     @jwt_required()
     async def delete_weather(id):
         weather_data = await delete_weather_service(id)
+        socketio.emit('delete_data', id, namespace='/data')
         return jsonify(weather_data)
 

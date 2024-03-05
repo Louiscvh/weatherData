@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client'
 import {useEffect, useState} from "react";
-import { AreaChart } from '@tremor/react';
+import { AreaChart, EventProps } from '@tremor/react';
 import {
     Select,
     SelectContent,
@@ -9,13 +9,12 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -28,6 +27,15 @@ import {format} from "date-fns";
 import {cn} from "@/utils.ts";
 import {toast} from "sonner";
 import {useLocalStorage} from "@/hooks/useLocalStorage.ts";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "@/context/AuthContext.tsx";
+import {AddNewWeather} from "@/components/AddNewWeather.tsx";
+import {cities} from "@/data/cities.data.ts";
+import {z} from "zod";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form.tsx";
+import {Input} from "@/components/ui/input.tsx";
 
 type WeatherData = {
     id: number
@@ -37,9 +45,19 @@ type WeatherData = {
     temperature: number
     feels_like: number
     humidity: number
-    pressure: number,
+    pressure: number
+    description: string
     timestamp: string
 }
+
+const formSchema = z.object({
+    city_name: z.string(),
+    temperature: z.string(),
+    feels_like: z.string(),
+    humidity: z.string(),
+    pressure: z.string(),
+    description: z.string(),
+})
 
 export const Dashboard = () => {
     const [weatherData, setWeatherData] = useState<WeatherData[]>([])
@@ -47,8 +65,12 @@ export const Dashboard = () => {
     const [startDate, setStartDate] = useState<Date>()
     const [endDate, setEndDate] = useState<Date>()
     const socket = io('http://localhost:8080/data')
-
+    const navigate = useNavigate();
+    const {logout} = useAuth();
     const {getItem} = useLocalStorage();
+
+    const [sheetIsOpen, setSheetIsOpen] = useState(false);
+    const [selectedData, setSelectedData] = useState<EventProps | null>(null);
 
     socket.on('connect', () => {
         console.log('connected')
@@ -56,13 +78,34 @@ export const Dashboard = () => {
 
     socket.on('latest_data', (data) => {
         const filteredData = data.filter((d: WeatherData) => d.city_name === selectedCity);
-        console.log(filteredData)
         setWeatherData((prevData) => [...prevData, filteredData]);
     });
-    
+
+    socket.on('send_newdata', (data) => {
+        setWeatherData((prevData) => [...prevData, data]);
+    })
+
+    socket.on('edit_data', (updatedData) => {
+        setWeatherData((prevData) => {
+            const newData = prevData.map((data) => {
+                if (data.id === updatedData.id) {
+                    return updatedData;
+                }
+                return data;
+            });
+            return newData;
+        });
+    });
+
+    socket.on('delete_data', (id) => {
+        setWeatherData((prevData) => {
+            const newData = prevData.filter((data) => data.id !== id);
+            return newData;
+        });
+    });
+
     useEffect(() => {
         const fetchWeatherData = async () => {
-            // Construire les paramètres de l'URL en fonction des dates
             let url = `http://localhost:8080/weather/city/${selectedCity}`;
 
             if (startDate) {
@@ -70,7 +113,6 @@ export const Dashboard = () => {
             }
 
             if (endDate) {
-                // Utiliser '&' si start_time est présent, sinon utiliser '?'
                 url += `${startDate ? '&' : '?'}end_time=${endDate.toISOString()}`;
             }
 
@@ -84,7 +126,12 @@ export const Dashboard = () => {
                 if(response.ok) {
                     setWeatherData(data);
                 } else {
-                    throw new Error(data.msg);
+                    if(response.status === 401) {
+                        navigate('/');
+                        logout();
+                    } else {
+                        throw new Error(data.msg);
+                    }
                 }
 
             }
@@ -102,6 +149,7 @@ export const Dashboard = () => {
             const timestamp = new Date(d.timestamp);
             const formattedTimestamp = format(timestamp || new Date().toString(), "MMMM do yyyy, h:mm a");
             return {
+                Id: d.id,
                 Timestamp: formattedTimestamp,
                 Latitude: d.latitude,
                 Longitude: d.longitude,
@@ -109,6 +157,7 @@ export const Dashboard = () => {
                 Humidity: d.humidity,
                 Pressure: d.pressure,
                 FeelsLike: d.feels_like,
+                Description: d.description,
             }
         })
     }
@@ -116,6 +165,89 @@ export const Dashboard = () => {
     const temperatureFormatter = (degreesCelsius: number) =>
         `${Intl.NumberFormat('en-US').format(degreesCelsius)}°C`;
 
+    const handleSheetOpen = (data: EventProps) => {
+        setSelectedData(data);
+        setSheetIsOpen(true);
+        form.reset({
+            city_name: selectedCity,
+            temperature: data?.Temperature.toString(),
+            feels_like: data?.FeelsLike.toString(),
+            humidity: data?.Humidity.toString(),
+            pressure: data?.Pressure.toString(),
+            description: '',
+        });
+    }
+
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            city_name: selectedCity?.toString(),
+            temperature: selectedData?.Temperature.toString(),
+            feels_like: selectedData?.FeelsLike.toString(),
+            humidity: selectedData?.Humidity.toString(),
+            pressure: selectedData?.Pressure.toString(),
+            description: selectedData?.Description.toString(),
+        },
+    });
+
+    const handleResetFilters = () => {
+        setSelectedCity('Paris');
+        setStartDate(undefined);
+        setEndDate(undefined);
+    }
+
+    console.log(selectedData)
+
+    const onSubmit = async(values: z.infer<typeof formSchema>) => {
+       try {
+              const city = cities.find((c) => c.name === values.city_name);
+              const request = await fetch("http://localhost:8080/weather", {
+                method: "PATCH",
+                headers: {
+                     "Content-Type": "application/json",
+                     "Authorization": `Bearer ${getItem('user')}`,
+                },
+                body: JSON.stringify({
+                     ...values,
+                     latitude: city?.latitude,
+                     longitude: city?.longitude,
+                    id: selectedData?.Id,
+                }),
+              })
+              const response = await request.json();
+              if(!request.ok) {
+                throw new Error(response.message);
+              }
+              toast("Weather data edited successfully");
+              setSheetIsOpen(false);
+       }
+         catch (error) {
+                  toast((error as Error).message);
+         }
+    }
+
+    const handleDelete = async () => {
+        try {
+            const request = await fetch(`http://localhost:8080/weather/${selectedData?.Id}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${getItem('user')}`,
+                },
+            });
+            console.log(request)
+            const response = await request.json();
+            if(!request.ok) {
+                throw new Error(response.message);
+            }
+            toast("Weather data deleted successfully");
+            setSheetIsOpen(false);
+        }
+        catch (error) {
+            toast((error as Error).message);
+        }
+    }
+
+    console.log(selectedData)
 
     return (
         <div className="container mt-12">
@@ -134,11 +266,11 @@ export const Dashboard = () => {
                                     <SelectValue placeholder="Choose a city" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Paris">Paris</SelectItem>
-                                    <SelectItem value="New York">New York</SelectItem>
-                                    <SelectItem value="Tokyo">Tokyo</SelectItem>
-                                    <SelectItem value="Sydney">Sydney</SelectItem>
-                                    <SelectItem value="Cape Town">Cape Town</SelectItem>
+                                    {cities.map((city, index) => (
+                                        <SelectItem key={index} value={city.name}>
+                                            {city.name}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <Popover>
@@ -186,23 +318,120 @@ export const Dashboard = () => {
                                     />
                                 </PopoverContent>
                             </Popover>
+                            <Button onClick={handleResetFilters} variant="link">
+                                Reset
+                            </Button>
                         </div>
                         <div>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button className="w-full">+</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Are you absolutely sure?</DialogTitle>
-                                        <DialogDescription>
-                                            This action cannot be undone. This will permanently delete your account
-                                            and remove your data from our servers.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                </DialogContent>
-                            </Dialog>
+                            <AddNewWeather />
                         </div>
+                        <Sheet onOpenChange={setSheetIsOpen} open={sheetIsOpen}>
+                            <SheetContent>
+                                <SheetHeader>
+                                    <SheetTitle>Edit this weather data</SheetTitle>
+                                    <SheetDescription>
+                                        <Form {...form}>
+                                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="city_name"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Email</FormLabel>
+                                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger>
+                                                                        <SelectValue placeholder="Choose a city" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    {cities.map((city, index) => (
+                                                                        <SelectItem key={index} value={city.name}>
+                                                                            {city.name}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="temperature"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Temperature</FormLabel>
+                                                            <FormControl>
+                                                                <Input {...field} type="number" step="0.1" placeholder="Temparature"/>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="feels_like"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Feels Like</FormLabel>
+                                                            <FormControl>
+                                                                <Input {...field} type="number" placeholder="Feels Like"/>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="humidity"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Humidity</FormLabel>
+                                                            <FormControl>
+                                                                <Input {...field} type="number" placeholder="Humidity"/>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="pressure"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Pressure</FormLabel>
+                                                            <FormControl>
+                                                                <Input {...field} type="number" placeholder="Pressure"/>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="description"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>Description</FormLabel>
+                                                            <FormControl>
+                                                                <Input {...field} placeholder="Description"/>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <Button type="submit" className="w-full">Submit</Button>
+
+                                            </form>
+                                        </Form>
+                                        <Button onClick={handleDelete} variant="destructive" className="w-full mt-2">
+                                            Delete
+                                        </Button>
+                                    </SheetDescription>
+                                </SheetHeader>
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </section>
                 <section className="grid md:grid-cols-2 gap-4">
@@ -214,6 +443,7 @@ export const Dashboard = () => {
                         categories={['Temperature', 'FeelsLike']}
                         colors={['red', 'indigo']}
                         yAxisWidth={60}
+                        onValueChange={(v) => handleSheetOpen(v)}
                         valueFormatter={temperatureFormatter}
                     />
                     <AreaChart

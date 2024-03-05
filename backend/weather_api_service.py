@@ -74,17 +74,17 @@ async def get_weather_by_id_service(id):
 async def create_weather_service(weather_params):
     try:
         await prisma.connect()
+        print(weather_params)
 
-        # Use the create method and pass the data as a dictionary
         created_weather = await prisma.weatherdata.create(
             data={
                 'city_name': weather_params['city_name'],
                 'latitude': weather_params['latitude'],
                 'longitude': weather_params['longitude'],
-                'temperature': weather_params['temperature'],
-                'feels_like': weather_params['feels_like'],
-                'humidity': weather_params['humidity'],
-                'pressure': weather_params['pressure'],
+                'temperature': float(weather_params['temperature']),
+                'feels_like': float(weather_params['feels_like']),
+                'humidity': float(weather_params['humidity']),
+                'pressure': float(weather_params['pressure']),
                 'description': weather_params['description'],
             }
         )
@@ -95,6 +95,29 @@ async def create_weather_service(weather_params):
         print(f"Error creating weather data: {e}")
         return None
 
+    finally:
+        await prisma.disconnect()
+
+async def update_weather_service(weather_params):
+    try:
+        await prisma.connect()
+        updated_weather = await prisma.weatherdata.update(
+            where={'id': weather_params['id']},
+            data={
+                'city_name': weather_params['city_name'],
+                'latitude': weather_params['latitude'],
+                'longitude': weather_params['longitude'],
+                'temperature': float(weather_params['temperature']),
+                'feels_like': float(weather_params['feels_like']),
+                'humidity': float(weather_params['humidity']),
+                'pressure': float(weather_params['pressure']),
+                'description': weather_params['description'],
+            }
+        )
+        return weather_data_to_dict(updated_weather)
+    except Exception as e:
+        print(f"Error updating weather data: {e}")
+        return None
     finally:
         await prisma.disconnect()
 

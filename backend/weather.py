@@ -21,12 +21,13 @@ def create_app():
 prisma = Client()
 app = create_app()
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
-init_routes(app)
+socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
+
+init_routes(app, socketio)
 init_auth_routes(app)
 jwt = JWTManager(app)
 
 
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
 
 async def get_latest_data_from_db():
     try:
