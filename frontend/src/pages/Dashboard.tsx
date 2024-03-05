@@ -454,6 +454,7 @@ export const Dashboard = () => {
                         categories={['Pressure', 'Latitude', 'Longitude']}
                         colors={['red', 'blue', 'green']}
                         yAxisWidth={60}
+                        onValueChange={(v) => handleSheetOpen(v)}
                     />
                 </section>
         </div>
