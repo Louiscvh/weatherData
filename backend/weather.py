@@ -7,27 +7,48 @@ from weather_api import init_routes
 from weather_auth import init_auth_routes
 from weather_api_service import weather_data_to_dict
 from flask_jwt_extended import JWTManager
+from flasgger import Swagger
+from flasgger.utils import swag_from
 from flask_cors import CORS
+from dotenv import load_dotenv
 import asyncio
+import os
+
 
 def create_app():
     app = Flask(__name__)
     app.config["DEBUG"] = True
     app.config['SECRET_KEY'] = 'secret'
-    app.config['JWT_SECRET_KEY'] = 'lazubstazvcdrezfbrgjokisbaz2iusbyd621çdjdbazbd'  # Change this to a secure secret key
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET')  # Change this to a secure secret key
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
+    app.config['SWAGGER'] = {
+        'title': 'Weather API',
+        'uiversion': 3,
+        'openapi': '3.0.2',
+        'description': 'API for weather data management',
+        'termsOfService': 'https://example.com/terms',
+        'contact': {
+            'name': 'Your Name',
+            'url': 'https://example.com/contact',
+            'email': 'your.email@example.com',
+        },
+        'license': {
+            'name': 'Your License',
+            'url': 'https://example.com/license',
+        },
+    }
     return app
 
 prisma = Client()
 app = create_app()
+load_dotenv()
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 socketio = SocketIO(app, cors_allowed_origins="http://localhost:5173")
 
 init_routes(app, socketio)
 init_auth_routes(app)
 jwt = JWTManager(app)
-
-
+swagger = Swagger(app)
 
 async def get_latest_data_from_db():
     try:

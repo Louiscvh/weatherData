@@ -77,8 +77,9 @@ export const Dashboard = () => {
     })
 
     socket.on('latest_data', (data) => {
-        const filteredData = data.filter((d: WeatherData) => d.city_name === selectedCity);
-        setWeatherData((prevData) => [...prevData, filteredData]);
+        //const filteredData = data.filter((d: WeatherData) => d.city_name === selectedCity);
+        console.log(data)
+        //setWeatherData((prevData) => [...prevData, filteredData]);
     });
 
     socket.on('send_newdata', (data) => {
