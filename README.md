@@ -1,5 +1,5 @@
 
-# Projet de Visualisation de Données Météo en Temps Réel
+# WeatherData - Projet de Visualisation de Données Météo en Temps Réel
 
 ## Introduction
 
