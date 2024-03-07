@@ -10,6 +10,7 @@ Welcome to the real-time weather data visualization project! This application pr
 
 -   **React:** JavaScript library for building the user interface.
 -   **TypeScript (TS):** Programming language for frontend development with static typing.
+-   **Tailwind CSS:** Utility-first CSS framework for rapid UI development.
 -   **Shadcn:** UI component library.
 -   **Zod:** TypeScript schema validation library to ensure data reliability.
 
