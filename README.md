@@ -36,6 +36,8 @@ Welcome to the real-time weather data visualization project! This application pr
 
 1.  Navigate to the `backend` folder.
 2.  Run `python weather.py` to start the backend server.
+3.  Run `python importWeatherData.py` to import weather data into the database each 5 minutes.
+
 
 ## Project Highlights
 
