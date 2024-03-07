@@ -4,6 +4,10 @@
 
 Welcome to the real-time weather data visualization project! This application provides an immersive user experience to visualize weather data that is updated every 5 minutes. The main goal is to showcase the effective use of real-time technologies with a large volume of data.
 
+## Documentation
+
+- You can find the API Swagger documentation at `http://127.0.0.1:8080/apidocs/` after starting the backend server.
+
 ## Technologies Used
 
 ### Frontend
@@ -31,6 +35,13 @@ Welcome to the real-time weather data visualization project! This application pr
 
 -   Username: `test`
 -  Password: `testtest`
+
+### Environment Variables
+
+Setup .env file in the root of the backend directory with the following environment variables:
+
+-   **Frontend:** No environment variables are required.
+-  **Backend:** JWT_SECRET=hdbezbdjzebfbadnhabfzebf2345678985432djebhabdjaznfhgbreh
 
 ### Frontend
 
