@@ -8,7 +8,7 @@ from weather_auth import init_auth_routes
 from weather_api_service import weather_data_to_dict
 from flask_jwt_extended import JWTManager
 from flasgger import Swagger
-from flasgger.utils import swag_from
+from importWeatherData import importWeatherData
 from flask_cors import CORS
 from dotenv import load_dotenv
 import asyncio
@@ -56,8 +56,7 @@ async def get_latest_data_from_db():
 
         current_datetime = datetime.utcnow()
 
-        five_minutes_ago = current_datetime - timedelta(minutes=5)
-        print(five_minutes_ago)
+        five_minutes_ago = current_datetime - timedelta(minutes=1)
         latest_data = await prisma.weatherdata.find_many(
             where={
                 'timestamp': {
@@ -68,7 +67,6 @@ async def get_latest_data_from_db():
         )
 
         serialized_data = [weather_data_to_dict(data) for data in latest_data]
-        print(serialized_data)
         return serialized_data
 
     except Exception as e:
@@ -78,24 +76,24 @@ async def get_latest_data_from_db():
     finally:
         await prisma.disconnect()
 
-async def emit_latest_data_every_hour():
+async def emit_latest_data_to_clients():
     try:
         latest_data = await get_latest_data_from_db()
-        print("ici")
         if latest_data is not None:
             print("Emitting latest data to clients")
             socketio.emit('latest_data', latest_data, namespace='/data')
     except Exception as e:
-        print(f"Job 'emit_latest_data' raised an exception: {e}")
+        print(f"Error emitting latest data to clients: {e}")
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(
-        lambda: asyncio.run(emit_latest_data_every_hour()),
+        lambda: asyncio.run(emit_latest_data_to_clients()),
         trigger='interval',
-        minutes=5
+        minutes=1
     )
     scheduler.start()
+
 
 @socketio.on('connect', namespace='/data')
 def handle_connect():

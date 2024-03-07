@@ -24,7 +24,6 @@ async def getWeatherAndSave(db, city_name, lat, lon, api_key):
         pressure = weather_data['main']['pressure']
         description = weather_data['weather'][0]['description']
 
-        # Enregistrement des données dans la base de données avec Prisma
         await db.weatherdata.create(
             data={
                 'city_name': city_name,
@@ -61,7 +60,7 @@ async def importWeatherData():
         await db.connect()
         print("Connected to the database")
         loop = asyncio.get_event_loop()
-        schedule.every(5).minutes.do(lambda: loop.create_task(scheduled_job(db, cities, api_key)))
+        schedule.every(1).minutes.do(lambda: loop.create_task(scheduled_job(db, cities, api_key)))
         while True:
             schedule.run_pending()
             await asyncio.sleep(1)

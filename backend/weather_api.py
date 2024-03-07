@@ -219,7 +219,6 @@ def init_routes(app, socketio):
     @jwt_required()
     async def create_weather():
         weather_params = request.json
-        print(weather_params)
         created_weather = await create_weather_service(weather_params)
         socketio.emit('send_newdata', created_weather, namespace='/data')
         return jsonify(created_weather)

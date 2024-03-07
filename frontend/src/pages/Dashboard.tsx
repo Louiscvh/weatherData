@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client'
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import { AreaChart, EventProps } from '@tremor/react';
 import {
     Select,
@@ -76,11 +76,17 @@ export const Dashboard = () => {
         console.log('connected')
     })
 
-    socket.on('latest_data', (data) => {
-        //const filteredData = data.filter((d: WeatherData) => d.city_name === selectedCity);
-        console.log(data)
-        //setWeatherData((prevData) => [...prevData, filteredData]);
-    });
+    const handleSocketData = useCallback((data: WeatherData[]) => {
+        const filteredData = data.filter((d: WeatherData) => d.city_name === selectedCity);
+        setWeatherData((prevData) => [...prevData, ...filteredData]);
+    }, [selectedCity]);
+
+    useEffect(() => {
+        socket.on('latest_data', handleSocketData);
+        return () => {
+            socket.off('latest_data', handleSocketData);
+        };
+    }, [socket, handleSocketData]);
 
     socket.on('send_newdata', (data) => {
         setWeatherData((prevData) => [...prevData, data]);
@@ -147,8 +153,8 @@ export const Dashboard = () => {
 
     const formatData = (data: WeatherData[]) => {
         return data?.map((d) => {
-            const timestamp = new Date(d.timestamp);
-            const formattedTimestamp = format(timestamp || new Date().toString(), "MMMM do yyyy, h:mm a");
+            const timestamp = d.timestamp ? new Date(d.timestamp) : new Date();
+            const formattedTimestamp = format(timestamp, "MMMM do yyyy, h:mm a");
             return {
                 Id: d.id,
                 Timestamp: formattedTimestamp,
@@ -171,10 +177,10 @@ export const Dashboard = () => {
         setSheetIsOpen(true);
         form.reset({
             city_name: selectedCity,
-            temperature: data?.Temperature.toString(),
-            feels_like: data?.FeelsLike.toString(),
-            humidity: data?.Humidity.toString(),
-            pressure: data?.Pressure.toString(),
+            temperature: data?.Temperature?.toString(),
+            feels_like: data?.FeelsLike?.toString(),
+            humidity: data?.Humidity?.toString(),
+            pressure: data?.Pressure?.toString(),
             description: '',
         });
     }
@@ -196,8 +202,6 @@ export const Dashboard = () => {
         setStartDate(undefined);
         setEndDate(undefined);
     }
-
-    console.log(selectedData)
 
     const onSubmit = async(values: z.infer<typeof formSchema>) => {
        try {
@@ -235,7 +239,6 @@ export const Dashboard = () => {
                     "Authorization": `Bearer ${getItem('user')}`,
                 },
             });
-            console.log(request)
             const response = await request.json();
             if(!request.ok) {
                 throw new Error(response.message);
@@ -247,8 +250,6 @@ export const Dashboard = () => {
             toast((error as Error).message);
         }
     }
-
-    console.log(selectedData)
 
     return (
         <div className="container mt-12">

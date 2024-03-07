@@ -74,8 +74,6 @@ async def get_weather_by_id_service(id):
 async def create_weather_service(weather_params):
     try:
         await prisma.connect()
-        print(weather_params)
-
         created_weather = await prisma.weatherdata.create(
             data={
                 'city_name': weather_params['city_name'],
