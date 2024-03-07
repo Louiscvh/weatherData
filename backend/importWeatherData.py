@@ -60,7 +60,7 @@ async def importWeatherData():
         await db.connect()
         print("Connected to the database")
         loop = asyncio.get_event_loop()
-        schedule.every(1).minutes.do(lambda: loop.create_task(scheduled_job(db, cities, api_key)))
+        schedule.every(5).minutes.do(lambda: loop.create_task(scheduled_job(db, cities, api_key)))
         while True:
             schedule.run_pending()
             await asyncio.sleep(1)

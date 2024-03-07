@@ -56,7 +56,7 @@ async def get_latest_data_from_db():
 
         current_datetime = datetime.utcnow()
 
-        five_minutes_ago = current_datetime - timedelta(minutes=1)
+        five_minutes_ago = current_datetime - timedelta(minutes=5)
         latest_data = await prisma.weatherdata.find_many(
             where={
                 'timestamp': {
@@ -90,7 +90,7 @@ def start_scheduler():
     scheduler.add_job(
         lambda: asyncio.run(emit_latest_data_to_clients()),
         trigger='interval',
-        minutes=1
+        minutes=5
     )
     scheduler.start()
 
