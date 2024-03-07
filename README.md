@@ -1,49 +1,48 @@
-
-# WeatherData - Projet de Visualisation de Données Météo en Temps Réel
+# WeatherData - Real-time Weather Data Visualization Project
 
 ## Introduction
 
-Bienvenue dans le projet de visualisation de données météo en temps réel ! Cette application offre une expérience utilisateur immersive pour visualiser les données météo qui sont mises à jour toutes les 5 minutes. L'objectif principal est de démontrer l'utilisation efficace des technologies temps réel avec un grand volume de données.
+Welcome to the real-time weather data visualization project! This application provides an immersive user experience to visualize weather data that is updated every 5 minutes. The main goal is to showcase the effective use of real-time technologies with a large volume of data.
 
-## Technologies Utilisées
-
-### Frontend
-
--   **React :** Bibliothèque JavaScript pour la construction de l'interface utilisateur.
--   **TypeScript (TS) :** Langage de programmation pour le développement frontend avec un typage statique.
--   **Shadcn :** Bibliothèque de composants UI.
--   **Zod :** Bibliothèque de validation de schémas TypeScript pour assurer la fiabilité des données.
-
-### Backend
-
--   **Flask :** Framework web léger pour le développement backend en Python.
--   **WebSockets :** Protocole de communication bidirectionnelle pour la mise à jour en temps réel des données.
--   **JWT (JSON Web Token) :** Méthode d'authentification sécurisée pour les utilisateurs.
--   **Swagger :** Outil de documentation pour spécifier et décrire les API REST.
-
-### Base de Données
-
--   **SQLite :** Système de gestion de base de données relationnelle intégré.
-
-## Démarrer le Projet
+## Technologies Used
 
 ### Frontend
 
-1.  Naviguez vers le dossier `frontend`.
-2.  Exécutez `pnpm install` pour installer les dépendances.
-3.  Lancez l'application avec `pnpm run dev`.
+-   **React:** JavaScript library for building the user interface.
+-   **TypeScript (TS):** Programming language for frontend development with static typing.
+-   **Shadcn:** UI component library.
+-   **Zod:** TypeScript schema validation library to ensure data reliability.
 
 ### Backend
 
-1.  Naviguez vers le dossier `backend`.
-2.  Exécutez `python weather.py` pour démarrer le serveur backend.
+-   **Flask:** Lightweight web framework for backend development in Python.
+-   **WebSockets:** Bidirectional communication protocol for real-time data updates.
+-   **JWT (JSON Web Token):** Secure authentication method for users.
+-   **Swagger:** Documentation tool to specify and describe REST APIs.
 
-## Points Forts du Projet
+### Database
 
-1.  **Clarté et Design :** L'interface utilisateur offre une expérience visuelle intuitive pour visualiser les données météo en temps réel.
-2.  **Solidité avec Gros Lots de Données :** La robustesse du système est démontrée par sa capacité à gérer de gros volumes de données tout en maintenant des performances optimales.
+-   **SQLite:** Integrated relational database management system.
 
-## Axes d'Amélioration
+## Getting Started
 
-1.  **Intégration d'une Queue Backend :** Pour gérer les données en cas d'influence sur la plateforme et assurer une meilleure résilience.
-2.  **Déploiement en Microservices :** Segmenter le système en microservices pour une scalabilité et une maintenance plus efficaces.
+### Frontend
+
+1.  Navigate to the `frontend` folder.
+2.  Run `pnpm install` to install dependencies.
+3.  Launch the application with `pnpm run dev`.
+
+### Backend
+
+1.  Navigate to the `backend` folder.
+2.  Run `python weather.py` to start the backend server.
+
+## Project Highlights
+
+1.  **Clarity and Design:** The user interface provides an intuitive visual experience for real-time weather data visualization.
+2.  **Robustness with Large Data Sets:** The system's robustness is demonstrated by its ability to handle large volumes of data while maintaining optimal performance.
+
+## Areas for Improvement
+
+1.  **Integration of a Backend Queue:** To handle data in case of platform influence and ensure better resilience.
+2.  **Deployment in Microservices:** Segment the system into microservices for more effective scalability and maintenance.
