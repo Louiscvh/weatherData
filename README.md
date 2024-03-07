@@ -26,6 +26,11 @@ Welcome to the real-time weather data visualization project! This application pr
 
 ## Getting Started
 
+### User credentials
+
+-   Username: `test`
+-  Password: `testtest`
+
 ### Frontend
 
 1.  Navigate to the `frontend` folder.
